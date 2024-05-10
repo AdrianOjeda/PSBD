@@ -106,40 +106,30 @@ app.post('/api/login', async (req, res) => {
     console.log(req.body);
     try {
         const hashedPassword = sha1(password);
-        const credentialsValidationQuery = `SELECT id, correo, password FROM usuario WHERE correo = $1 AND password = $2`;
+        const credentialsValidationQuery = `SELECT id_cliente, email, contraseña, isadmin FROM cliente WHERE email = $1 AND contraseña = $2`;
         const checkCredentialsValidation = await db.query(credentialsValidationQuery, [correo, hashedPassword]);
        
-        const tokenIdQuery = `SELECT id FROM usuario WHERE correo = $1`;
-        const resTokenIdQuery =  await  db.query(tokenIdQuery, [correo]);
-        
-        const tokenTypeAccount = `SELECT is_admin, is_verified FROM usuario where correo = $1`;
-        const resTokenTypeAccount =  await db.query(tokenTypeAccount, [correo]); 
-
-        console.log(resTokenTypeAccount.rows[0].is_admin);
-        console.log("is verified "+resTokenTypeAccount.rows[0].is_verified);
-
-        if(checkCredentialsValidation.rowCount === 1 && resTokenIdQuery.rowCount === 1){
+        if(checkCredentialsValidation.rowCount === 1){
+            const isAdmin = checkCredentialsValidation.rows[0].isadmin;
+            const userId = checkCredentialsValidation.rows[0].id_cliente;
             
             try {
-                const token = jwt.sign({ userId: resTokenIdQuery.rows[0].id }, 'your-secret-key');
-                //const tokenTypeAccount = jwt.sign({typeAccount: resTokenTypeAccount.rows[0].typeAccount}, 'secret-key');
-                const tokenTypeAccount = resTokenTypeAccount.rows[0].is_admin;
-                const isVerified = resTokenTypeAccount.rows[0].is_verified;
-                res.status(200).json({ message: 'User logged in successfully', token, tokenTypeAccount, isVerified });
+                const token = jwt.sign({ userId }, 'your-secret-key');
+                res.status(200).json({ message: 'User logged in successfully', token, isAdmin });
             } catch (error) {
                 console.error('Error generating token or setting user ID:', error);
+                res.status(500).json({ error: 'Failed to generate token' });
             }
-            
-            
-        }else{
-            res.setHeader('Content-Type', 'application/json');
+        } else {
             res.status(400).json({ error: 'Incorrect password or email' });
         }
-            
     } catch (error) {
+        console.error('Error logging in user:', error);
         res.status(500).json({ error: 'Failed to login user' });
     }
 });
+
+
 
 
 app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) => {

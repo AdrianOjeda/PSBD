@@ -1,8 +1,7 @@
-import React, {useState} from 'react'
-import InputForm from './InputForm'
+import React, { useState } from 'react';
+import InputForm from './InputForm';
 
-
-function LoginForm(){
+function LoginForm() {
     const [formData, setFormData] = useState({
         correo: '',
         password: '',
@@ -28,71 +27,60 @@ function LoginForm(){
             });
 
             if (!response.ok) {
-                throw new Error('Login failed');
+                throw new Error('Contraseña incorrecta');
             }
 
             const data = await response.json();
             const tokenId = data.token;
+            const isAdmin = data.isAdmin;
 
-            const typeAccount =  data.tokenTypeAccount;
-            const isVerified = data.isVerified;
-            alert("is admin " + typeAccount + " is verified "+isVerified );
-            // Assuming the API response contains a token
+            alert("Is admin: " + isAdmin);
+
+            // Guardar el token en el almacenamiento local
             localStorage.setItem('token id', tokenId);
-            // Redirect to feed page or handle login success in other ways
-            if(typeAccount === false && isVerified === false){
-                
-                window.location.href = "/notVerified";
-
-            }if(typeAccount === true && isVerified === true){
-
-                window.location.href = '/adminFeed';
+            console.log(isAdmin);
+            // Redireccionar a la página correspondiente según el estado de isAdmin
+            if (isAdmin === true) {
+                window.location.href = '/terminosYcondiciones'; // Redireccionar a la página de administrador
+            } else {
+                window.location.href = '/feedreal'; // Redireccionar a la página de usuario normal
             }
-            if (typeAccount === false && isVerified ===  true){
-                window.location.href = '/feedreal';
-            }
-
-            
-            
         } catch (error) {
             alert('Login failed: ' + error.message);
             console.error('Login failed:', error);
         }
     };
 
-    return (<div className="form-container">
-    <h1 className="header">Inicia sesión</h1>
-    <form className="form" onSubmit={handleSubmit}>
-        
-        <InputForm
-            placeholder = 'CORREO'
-            id = 'correo'    
-            type ='text'  
-            name = 'correo'  
-            value={formData.correo}
-            onChange={(value) => handleChange('correo', value)}
-        />
-        <InputForm
-            placeholder = "CONTRASEÑA"
-            id = 'password'
-            type = 'password'
-            name = 'password'
-            value={formData.password}
-            onChange={(value) => handleChange('password', value)}
-        />
-
-        
-        <div className="button-container">
-            <button className="signup-button">Iniciar sesión</button>
+    return (
+        <div className="form-container">
+            <h1 className="header">Inicia sesión</h1>
+            <form className="form" onSubmit={handleSubmit}>
+                <InputForm
+                    placeholder='CORREO'
+                    id='correo'
+                    type='text'
+                    name='correo'
+                    value={formData.correo}
+                    onChange={(value) => handleChange('correo', value)}
+                />
+                <InputForm
+                    placeholder="CONTRASEÑA"
+                    id='password'
+                    type='password'
+                    name='password'
+                    value={formData.password}
+                    onChange={(value) => handleChange('password', value)}
+                />
+                <div className="button-container">
+                    <button className="signup-button">Iniciar sesión</button>
+                </div>
+            </form>
+            <div className="footer">
+                No tienes una cuenta? <a href="index.html" className="login-link">Registrate</a>
+                <p className="terms">Al registrarse, estas aceptando nuestros <a href="./terminosYcondiciones" className="terms-link">Terminos y condiciones</a></p>
+            </div>
         </div>
-    </form>
-    <div className="footer">
-        No tienes una cuenta? <a href="index.html" className="login-link">Registrate</a>
-        <p className="terms">Al registrarse, estas aceptando nuestros <a href="./terminosYcondiciones" className="terms-link">Terminos y condiciones</a></p>
-    </div>
-</div>)
-
-
+    );
 }
 
 export default LoginForm;

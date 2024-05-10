@@ -64,7 +64,7 @@ function RegisterForm() {
     
             setFormData(initialFormData);
             alert('User registered successfully');
-            window.location.href = "/terminosYcondiciones"
+            window.location.href = "/login"
         } catch (error) {
             alert('User registration failed: ' + error.message);
             alert('hola')
