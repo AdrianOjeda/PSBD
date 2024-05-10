@@ -65,7 +65,7 @@ function LoginForm(){
     <form className="form" onSubmit={handleSubmit}>
         
         <InputForm
-            placeholder = 'CORREO INSTITUCIONAL'
+            placeholder = 'CORREO'
             id = 'correo'    
             type ='text'  
             name = 'correo'  

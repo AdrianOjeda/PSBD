@@ -68,54 +68,27 @@ const storage = multer.diskStorage({
 // Configure multer upload middleware
 const upload = multer({ storage: storage });
 
-app.post('/api/register', upload.single('image'), async (req, res) => {
+app.post('/api/register', async (req, res) => {
     // Extract form data from the request body
-    const { nombres, apellidos, codigo, correo, password, repetirPassword } = req.body;
-    console.log(req.body);
-    try {
-        // Perform validation checks here if needed
-        const emailValidationQuery = `SELECT correo FROM usuario WHERE correo = $1`;
-        const checkEmailValidation = await db.query(emailValidationQuery, [correo]);
-
-        console.log(checkEmailValidation);
-        const checkEmailDomain = "@alumnos.udg.mx";
-
-        if (!req.file) {
-            // Handle the case where no file was uploaded
-            return res.status(400).json({ error: 'No image uploaded' });
-        }
-        const image = req.file; // Access the uploaded file
-        const imageName = image.filename; // Store the filename
-        console.log(imageName);
-        console.log(correo);
-        if (correo.includes(checkEmailDomain)){
-
-            if(checkEmailValidation.rowCount > 0){
-                res.setHeader('Content-Type', 'application/json');
-                res.status(400).json({ error: 'Email already exists!!' });
-                console.log(checkEmailValidation.rowCount);
-            }else{
-                if(password !== repetirPassword){
-                    res.setHeader('Content-Type', 'application/json');
-                    res.status(400).json({ error: 'Passwords dont match!!' });
-                    console.log("passwords dont match!");
-                }else{
+    console.log("Hola")
+    const { nombres, ciudad, colonia, cp, calle ,telefono ,correo, password, repetirPassword } = req.body;
+    
                     try{
                         // Insert the user data into the database
                         const hashedPassword = sha1(password);
-                        console.log(hashedPassword);
                         const insertQuery = `
-                        INSERT INTO usuario (nombres, apellidos, correo, password, is_verified, codigo, is_admin, credencial)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        INSERT INTO cliente (contraseña, telefono, nombre, email, ciudad, cp, colonia, calle, isadmin)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                         `;
-                        await db.query(insertQuery, [nombres, apellidos, correo, hashedPassword, false, codigo, false, imageName]);
+                        await db.query(insertQuery, [hashedPassword, telefono, nombres, correo, ciudad, cp, colonia, calle, false]);
+                        console.log("AAAA")
                         try{
-                            const idUsuarioQuery = `SELECT id FROM usuario WHERE correo = $1 AND password = $2`;
+                            const idUsuarioQuery = 'SELECT id_cliente FROM cliente WHERE email = $1 AND contraseña = $2';
                             const idResponse = await db.query(idUsuarioQuery, [correo, hashedPassword]);
-                            
-                            console.log(idResponse.rows[0].id);
-                            res.status(200).json(idResponse.rows[0].id);
+                            console.log(idResponse.rows[0].id_cliente);
+                            res.status(200).json(idResponse.rows[0].id_cliente);
                         }catch(err){
+                            console.log("bbbbb") /* no entra al try*/
                             res.status(500).json({err: "No se pudo registrar el usuario"});
                         }
                         
@@ -124,18 +97,7 @@ app.post('/api/register', upload.single('image'), async (req, res) => {
                         res.setHeader('Content-Type', 'application/json');
                         res.status(500).json({ error: 'No se pudo registrar al usuario!' });
                     }
-                }
-                }
                 
-        }else{
-            res.status(400).json({ error: 'Email format incorrect!!' });
-        }
-        
-
-    } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).json({ error: 'Failed to register user' });
-    }
 });
 
 

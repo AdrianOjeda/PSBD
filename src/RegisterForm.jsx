@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import InputForm from './InputForm';
 
-import BadgeIcon from '@mui/icons-material/Badge';
 
 function RegisterForm() {
 
     const initialFormData = {
         nombres: '',
-        apellidos: '',
-        codigo: '',
+        ciudad: '',
+        colonia: '',
+        cp: '',
+        calle:'',
+        telefono:'',
         correo: '',
         password: '',
-        repetirPassword: '',
-        image: null,
+        repetirPassword: ''
     };
 
     const [formData, setFormData] = useState(initialFormData);
@@ -25,34 +26,31 @@ function RegisterForm() {
         });
     };
     
-    const [selectedFile, setSelectedFile] = useState(null);
 
-    const handleImageChange = (event) => {
-        const imageFile = event.target.files[0];
-        console.log(imageFile);
-        setFormData({ ...formData, image: imageFile });
-        setSelectedFile(imageFile);
-        console.log(selectedFile);
-        
-    };
 
     const handleSubmit = async (event) => {
+        console.log(event)
         event.preventDefault();
     
         try {
             const formDataToSend = new FormData(); // Use a different variable name to avoid confusion
             formDataToSend.append('nombres', formData.nombres);
-            formDataToSend.append('apellidos', formData.apellidos);
-            formDataToSend.append('codigo', formData.codigo);
+            formDataToSend.append('ciudad', formData.ciudad);
+            formDataToSend.append('colonia', formData.colonia);
+            formDataToSend.append('cp', formData.cp);
+            formDataToSend.append('calle', formData.calle);
+            formDataToSend.append('telefono', formData.telefono)
             formDataToSend.append('correo', formData.correo);
             formDataToSend.append('password', formData.password);
             formDataToSend.append('repetirPassword', formData.repetirPassword);
-            formDataToSend.append('image', selectedFile); // Use selectedFile, not formData.image
-    
+            console.log(formData);
             console.log(formDataToSend);
-            const response = await fetch('http://localhost:3000/api/register', {
+            const response = await fetch('/api/register', {
                 method: 'POST',
-                body: formDataToSend,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData),
             });
     
             if (!response.ok) {
@@ -65,11 +63,11 @@ function RegisterForm() {
             }
     
             setFormData(initialFormData);
-            setSelectedFile(null);
             alert('User registered successfully');
-            window.location.href = "/customizeProfile"
+            window.location.href = "/terminosYcondiciones"
         } catch (error) {
             alert('User registration failed: ' + error.message);
+            alert('hola')
             console.error('User registration failed:', error);
         }
     };
@@ -86,23 +84,47 @@ function RegisterForm() {
                     onChange={(value) => handleChange('nombres', value)}
                 />
                 <InputForm
-                    placeholder="APELLIDOS"
-                    id="apellidos"
-                    name="apellidos"
+                    placeholder="CIUDAD"
+                    id="ciudad"
+                    name="ciudad"
                     type="text"
-                    value={formData.apellidos}
-                    onChange={(value) => handleChange('apellidos', value)}
+                    value={formData.ciudad}
+                    onChange={(value) => handleChange('ciudad', value)}
                 />
                 <InputForm
-                    placeholder="CODIGO ESTUDIANTE"
-                    id="codigo"
-                    name="codigo"
+                    placeholder="COLONIA"
+                    id="colonia"
+                    name="colonia"
                     type="text"
-                    value={formData.codigo}
-                    onChange={(value) => handleChange('codigo', value)}
+                    value={formData.colonia}
+                    onChange={(value) => handleChange('colonia', value)}
                 />
                 <InputForm
-                    placeholder="CORREO INSTITUCIONAL"
+                    placeholder="CODIGO POSTAL"
+                    id="cp"
+                    name="cp"
+                    type="number"
+                    value={formData.cp}
+                    onChange={(value) => handleChange('cp', value)}
+                />
+                <InputForm
+                    placeholder="CALLE"
+                    id="calle"
+                    name="calle"
+                    type="text"
+                    value={formData.calle}
+                    onChange={(value) => handleChange('calle', value)}
+                />
+                <InputForm
+                    placeholder="TELEFONO"
+                    id="telefono"
+                    name="telefono"
+                    type="text"
+                    value={formData.telefono}
+                    onChange={(value) => handleChange('telefono', value)}
+                />
+                <InputForm
+                    placeholder="CORREO"
                     id="correo"
                     name="correo"
                     type="text"
@@ -125,18 +147,6 @@ function RegisterForm() {
                     type="password"
                     value={formData.repetirPassword}
                     onChange={(value) => handleChange('repetirPassword', value)}
-                />
-                <label htmlFor="fileInput">
-                {selectedFile ? <p style={{marginBottom: '3px', marginTop: '3px'}}>Credencial: {selectedFile.name}</p> : <p style={{marginBottom: '3px',  marginTop: '3px'}}>Credencial: </p> }
-                    <BadgeIcon style={{marginBottom: '10px', cursor: "pointer"}} />
-                    
-                </label>
-                <input
-                    type="file"
-                    id="fileInput"
-                    style={{ display: 'none' }}
-                    onChange={handleImageChange}
-                    accept="image/*"
                 />
                 <div className="button-container">
                     <button type="submit" className="signup-button">
