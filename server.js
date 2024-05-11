@@ -106,30 +106,36 @@ app.post('/api/login', async (req, res) => {
     console.log(req.body);
     try {
         const hashedPassword = sha1(password);
-        const credentialsValidationQuery = `SELECT id_cliente, email, contraseña, isadmin FROM cliente WHERE email = $1 AND contraseña = $2`;
-        const checkCredentialsValidation = await db.query(credentialsValidationQuery, [correo, hashedPassword]);
+        const credentialsValidationQuery = `SELECT id_cliente, email, contraseña, isadmin FROM cliente WHERE email = $1`;
+        const checkCredentialsValidation = await db.query(credentialsValidationQuery, [correo]);
        
         if(checkCredentialsValidation.rowCount === 1){
+            const storedPassword = checkCredentialsValidation.rows[0].contraseña;
             const isAdmin = checkCredentialsValidation.rows[0].isadmin;
             const userId = checkCredentialsValidation.rows[0].id_cliente;
             
-            try {
-                const token = jwt.sign({ userId }, 'your-secret-key');
-                res.status(200).json({ message: 'User logged in successfully', token, isAdmin });
-            } catch (error) {
-                console.error('Error generating token or setting user ID:', error);
-                res.status(500).json({ error: 'Failed to generate token' });
+            // Verificar si la contraseña coincide
+            if (hashedPassword === storedPassword) {
+                try {
+                    const token = jwt.sign({ userId }, 'your-secret-key');
+                    res.status(200).json({ message: 'User logged in successfully', token, isAdmin });
+                } catch (error) {
+                    console.error('Error generating token or setting user ID:', error);
+                    res.status(500).json({ error: 'Failed to generate token' });
+                }
+            } else {
+                // La contraseña es incorrecta
+                res.status(400).json({ error: 'Contraseña incorrecta' });
             }
         } else {
-            res.status(400).json({ error: 'Incorrect password or email' });
+            // El correo electrónico no está registrado
+            res.status(400).json({ error: 'Correo no encontrado' });
         }
     } catch (error) {
         console.error('Error logging in user:', error);
         res.status(500).json({ error: 'Failed to login user' });
     }
 });
-
-
 
 
 app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) => {
@@ -155,12 +161,10 @@ app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) =
 });
 
 app.get('/api/renderBooks', verifyToken, async (req, res) => {
-    const userId = req.user.userId;
-    console.log("User");
-    console.log(userId);
     try {
-        const displayBooksQuery = `SELECT libro.id_libro, libro.titulo, libro.autor, libro.isbn, libro.descripcion, libro.coverimage, usuario.nombres, usuario.id FROM libro INNER JOIN usuario on usuario.id = libro.idusuario WHERE usuario.id = $1`;
-        const displayBooks = await db.query(displayBooksQuery, [userId]);
+        const displayBooksQuery = 'SELECT * FROM render';
+
+        const displayBooks = await db.query(displayBooksQuery);
         console.log(displayBooks.rows);
         res.status(200).json(displayBooks.rows);
 
@@ -193,54 +197,6 @@ app.delete('/api/deleteBook/:id', verifyToken, async (req, res)=>{
     
 
 });
-
-app.post('/api/verifyUser/:id', async (req, res)=>{
-    const idUser =  req.params.id;
-    console.log(idUser);
-    try{
-        const validateUserQuery = `UPDATE usuario SET is_verified = true WHERE id = $1`;
-        await db.query(validateUserQuery, [idUser]);
-        res.status(200).json({message: "Usuario validado con exito"});
-    }catch(err){
-        res.status(500).json({err: 'no se pudo validar el usuario'})
-    }
-})
-
-app.delete('/api/verifyUser/deleteUser/:id', async (req, res)=>{
-    const idUser =  req.params.id;
-    console.log(idUser);
-    try{
-        const getProfileId = `SELECT id FROM perfil_usuario WHERE user_id = $1`;
-        const idResponse = await db.query(getProfileId, [idUser]);
-        const profileId = idResponse.rows[0].id;
-        console.log(profileId);
-
-        try{
-            const deleteTags = `DELETE FROM user_tags WHERE user_id = $1`;
-            await db.query(deleteTags, [profileId]);
-            try{
-                const deleteUserProfile = `DELETE FROM perfil_usuario WHERE id = $1`;
-                await db.query(deleteUserProfile, [profileId]);
-                try{
-                    const deleteUserQuery = `DELETE FROM usuario where id = $1`;
-                    await db.query(deleteUserQuery, [idUser]);
-                    res.status(200).json({message: "Usuario eliminado con exito"});
-
-                }catch(err){
-                    res.status.json({err: "No se pudo borrar el usuario!"})
-                }
-            }catch(err){
-                res.status.json({err: "No se pudo borrar el perfil"})
-            }
-        }catch(err){
-
-            res.status(500).json({err: "No se pudieron borrar los tags!"});
-        }
-        
-    }catch(err){
-        res.status(500).json({err: "No se pudo obtener el id del perfil del usuario"})
-    }
-})
 
 
 app.post('/api/editBook', verifyToken, async (req, res)=>{

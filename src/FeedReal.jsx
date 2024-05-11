@@ -1,24 +1,15 @@
 import React from "react";
-import HeaderReal from "./HeaderReal";
 import DisplayBooks from "./DisplayBooks";
-import Footer from "./Footer";
 
-function FeedReal()
-{
+function FeedReal() {
 
-    return <div>
-        <div className="divHeader">
-            <HeaderReal/>
+    return (
+        <div className="feed">
+            <div>
+                <DisplayBooks/>
+            </div>
         </div>
-        <div>
-            <DisplayBooks/>
-        </div>
-        <div>
-            <Footer/>
-        </div>
-
-    </div>
-
+    );
 }
 
-export default FeedReal
+export default FeedReal;
