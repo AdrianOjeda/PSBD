@@ -40,13 +40,17 @@ function verifyToken(req, res, next) {
     const token = authHeader.substring(7); // Remove "Bearer " prefix
     try {
         const decoded = jwt.verify(token, "your-secret-key");
+        console.log("Decoded token:", decoded);
         req.user = decoded;
         
         next();
     } catch (error) {
+        console.error("Token verification error:", error);
         return res.status(403).json({ error: "Invalid token" });
     }
 }
+
+
 
 
 //Multer middleware 
@@ -138,9 +142,72 @@ app.post('/api/login', async (req, res) => {
 });
 
 
+
+
+app.get('/api/renderBooks', verifyToken, async (req, res) => {
+    try {
+        let sortBy = req.query.sortBy;
+
+        let orderByClause = ''; 
+        switch (sortBy) {
+            case 'title':
+                orderByClause = 'ORDER BY titulo ASC';
+                break;
+            case 'stock':
+                orderByClause = 'ORDER BY stock ASC';
+                break;
+            case 'price_asc':
+                orderByClause = 'ORDER BY precio ASC';
+                break;
+            case 'price_desc':
+                orderByClause = 'ORDER BY precio DESC';
+                break;
+            case 'spanish':
+                orderByClause = "WHERE idioma = 'Español' ORDER BY id_de_libro";
+                break;
+            case 'english':
+                orderByClause = "WHERE idioma = 'English' ORDER BY id_de_libro";
+                break;
+            default:
+                orderByClause = '';
+                break;
+        }
+
+        const displayBooksQuery = `SELECT * FROM render ${orderByClause}`;
+
+        const displayBooks = await db.query(displayBooksQuery);
+        console.log(displayBooks.rows);
+        res.status(200).json(displayBooks.rows);
+
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load books" });
+    }
+});
+app.post('/api/addToCart', verifyToken,async (req, res) => {
+    try {
+        const { bookId, cantidad } = req.body; // Obtiene los datos del cuerpo de la solicitud
+        const userId = req.user.userId; // Obtén el ID de usuario del token de autenticación
+        console.log(req.user)
+        console.log("Datos recibidos en la solicitud:");
+        console.log("bookId:", bookId);
+        console.log("cantidad:", cantidad);
+        console.log("userId:", userId);
+
+        // Inserta los datos en la base de datos
+        const insertQuery = 'INSERT INTO carrito(id_cliente, id_de_libro, cantidad) VALUES ($1, $2, $3)';
+        const result = await db.query(insertQuery, [userId, bookId, cantidad]);
+
+        res.status(200).json({ message: 'Libro agregado al carrito exitosamente' });
+    } catch (error) {
+        console.error('Error al agregar libro al carrito:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
 app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) => {
     try {
-        const userId = req.user.userId;
+        const userId = req.token;
         const { titulo, autor, isbn, descripcion } = req.body;
         const image = req.file; // Access the uploaded file
         const imageName = image.filename; // Store the filename
@@ -159,21 +226,6 @@ app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) =
         res.status(500).json({ error: 'Failed to add book' });
     }
 });
-
-app.get('/api/renderBooks', verifyToken, async (req, res) => {
-    try {
-        const displayBooksQuery = 'SELECT * FROM render';
-
-        const displayBooks = await db.query(displayBooksQuery);
-        console.log(displayBooks.rows);
-        res.status(200).json(displayBooks.rows);
-
-    } catch (error) {
-        res.status(500).json({ error: "Failed to load books" });
-    }
-});
-
-
 
 
 app.delete('/api/deleteBook/:id', verifyToken, async (req, res)=>{

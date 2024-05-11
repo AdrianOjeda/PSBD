@@ -133,3 +133,78 @@ h1 {
     max-width: 100%; /* Ancho máximo para DisplayBooks */
 }
 
+.header {
+    display: flex;
+    justify-content: space-between; /* Para que los elementos se distribuyan a lo largo del contenedor */
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+    text-align: center;
+}
+
+.header-center {
+    flex-grow: 1; /* Para que el contenido se expanda y ocupe el espacio restante */
+}
+
+.header-right {
+    display: flex; /* Para que los elementos se alineen horizontalmente */
+    align-items: center; /* Para centrar verticalmente los elementos */
+}
+
+.pageLink {
+    cursor: pointer;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    text-decoration: underline;
+}
+
+.cart {
+    margin-right: 20px; /* Ajusta el espacio entre el icono del carrito y los otros iconos */
+    font-size: 2.5rem;
+}
+
+.logout {
+    margin-left: 20px; /* Ajusta el espacio entre el ícono de salida y los otros iconos */
+    font-size: 2.5rem;
+}
+
+.popup-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .popup-container h2 {
+    margin-bottom: 20px;
+  }
+  
+  .popup-container label {
+    margin-bottom: 10px;
+  }
+  
+  .popup-container input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+  }
+  
+  .popup-container button {
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .popup-container button:hover {
+    background-color: #0056b3;
+  }
+  
