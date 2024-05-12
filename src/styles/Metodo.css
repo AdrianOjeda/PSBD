@@ -1,0 +1,106 @@
+.metodo-app-container {
+  display: flex;
+}
+
+.aside {
+  flex: 1;
+  background-color: #f0f0f0;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px;
+}
+
+.metodos-de-pago-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.metodo-de-pago {
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.metodo-de-pago.seleccionado {
+  background-color: lightblue;
+}
+
+.card {
+  width: 300px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.card-text {
+  margin-bottom: 15px;
+}
+
+.btn {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.registro-metodo-form {
+  margin-top: 20px;
+}
+
+.registro-metodo-form label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.registro-metodo-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-sizing: border-box;
+  margin-top: 5px;
+}
+
+.registro-metodo-form button {
+  margin-top: 10px;
+  margin-right: 20px; /* Agrega margen a la derecha */
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.registro-metodo-form button:last-child {
+  margin-right: 0; /* Elimina el margen del último botón */
+}
+
+.registro-metodo-form button:hover {
+  background-color: #0056b3;
+}
+
+.deleteIcon{
+  text-align: end;
+}

@@ -9,7 +9,7 @@ function Header() {
                 <h1>Bienvenido a la Librería</h1>
             </div>
             <div className="header-right">
-                <ShoppingCartCheckoutIcon className="pageLink cart" style={{ fontSize: '2.5rem' }} onClick={() => { window.location.href = "/feedreal" }} />
+                <ShoppingCartCheckoutIcon className="pageLink cart" style={{ fontSize: '3rem' }} onClick={() => { window.location.href = "/Carrito" }} />
                 <LogoutIcon className="pageLink logout" style={{ fontSize: '3rem' }} onClick={() => { window.location.href = "/login" }}/>
             </div>
         </header>

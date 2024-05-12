@@ -142,8 +142,6 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-
-
 app.get('/api/renderBooks', verifyToken, async (req, res) => {
     try {
         let sortBy = req.query.sortBy;
@@ -183,24 +181,110 @@ app.get('/api/renderBooks', verifyToken, async (req, res) => {
         res.status(500).json({ error: "Failed to load books" });
     }
 });
-app.post('/api/addToCart', verifyToken,async (req, res) => {
+
+app.get('/api/renderCarrito', verifyToken, async(req, res) =>{
+    
+    const userId = req.user.userId;
+    console.log(userId)
+    try{
+        const displayBooksQuery = `
+        SELECT 
+            carrito.*, 
+            libro.titulo, 
+            libro.autor,
+            libro.portada,
+            libro.isbn, 
+            libro.precio,
+            libro.idioma,
+            (carrito.cantidad * libro.precio) AS precio_total
+        FROM 
+            carrito
+        JOIN 
+            libro ON carrito.id_de_libro = libro.id_de_libro
+        JOIN 
+            cliente ON carrito.id_cliente = cliente.id_cliente
+        WHERE 
+            cliente.id_cliente = $1;
+        `;
+        
+
+        const displayBooks = await db.query(displayBooksQuery,[userId]);
+        console.log(displayBooks.rows);
+        res.status(200).json(displayBooks.rows);
+
+    } catch (error) {
+        res.status(500).json({ error: "Failed to load books" });
+    }
+})
+
+app.get('/api/renderMethods', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
     try {
-        const { bookId, cantidad } = req.body; // Obtiene los datos del cuerpo de la solicitud
-        const userId = req.user.userId; // Obtén el ID de usuario del token de autenticación
-        console.log(req.user)
-        console.log("Datos recibidos en la solicitud:");
-        console.log("bookId:", bookId);
-        console.log("cantidad:", cantidad);
-        console.log("userId:", userId);
+        const displayMethodQuery = `
+        SELECT 
+            mc.id_metodo_pago_cliente,
+            mp.metodo_pago,
+            mc.id_cliente,
+            mc.descripcion
+        FROM 
+            metododepagocliente mc
+        INNER JOIN
+            metododepago mp ON mc.id_metodo_pago = mp.id_metodo_pago
+        WHERE id_cliente = $1`;
+        const displayMethod = await db.query(displayMethodQuery, [userId]);
+        res.status(200).json(displayMethod.rows);
+    } catch (error) {
+        console.error("Error en la consulta:", error);
+        res.status(500).json({ error: "Failed to fetch payment methods" });
+    }
+});
 
-        // Inserta los datos en la base de datos
-        const insertQuery = 'INSERT INTO carrito(id_cliente, id_de_libro, cantidad) VALUES ($1, $2, $3)';
-        const result = await db.query(insertQuery, [userId, bookId, cantidad]);
 
+
+app.post('/api/addToCart', verifyToken, async (req, res) => {
+    try {
+        const { bookId, cantidad } = req.body;
+        const userId = req.user.userId;
+        const existingQuery = 'SELECT * FROM carrito WHERE id_cliente = $1 AND id_de_libro = $2';
+        const existingResult = await db.query(existingQuery, [userId, bookId]);
+        let queryResult;
+        if (existingResult.rows.length > 0) {
+            // Si el libro ya está en el carrito, actualizar la cantidad
+            const updateQuery = 'UPDATE carrito SET cantidad = cantidad + $1 WHERE id_cliente = $2 AND id_de_libro = $3';
+            queryResult = await db.query(updateQuery, [cantidad, userId, bookId]);
+        } else {
+            // Si el libro no está en el carrito, insertar una nueva fila
+            const insertQuery = 'INSERT INTO carrito(id_cliente, id_de_libro, cantidad) VALUES ($1, $2, $3)';
+            queryResult = await db.query(insertQuery, [userId, bookId, cantidad]);
+        }
         res.status(200).json({ message: 'Libro agregado al carrito exitosamente' });
     } catch (error) {
-        console.error('Error al agregar libro al carrito:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        if (error.message.includes('La cantidad total en el carrito excede el stock disponible')) {
+            return res.status(400).json({ error: 'No hay suficiente stock disponible para este libro' });
+        } else {
+            console.error('Error al agregar libro al carrito:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+});
+
+
+app.post('/api/addMethod', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const metodoPago = req.body.metodoPago;
+        const descripcion = req.body.descripcion;
+        console.log(userId);
+        console.log(metodoPago);
+        console.log(descripcion);
+        
+        const insertQuery = "INSERT INTO metododepagocliente(id_metodo_pago, id_cliente, descripcion) VALUES ($1, $2, $3)";
+        const queryResult = await db.query(insertQuery, [metodoPago, userId, descripcion]);
+        console.log(queryResult)
+        res.status(200).send("Método de pago registrado correctamente.");
+    } catch (error) {
+        console.error("Error al insertar método de pago:", error);
+        res.status(500).send("Error al registrar el método de pago.");
     }
 });
 
@@ -227,6 +311,31 @@ app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) =
     }
 });
 
+app.delete('/api/deleteMethod/:id', verifyToken, async (req, res) => {
+    try {
+        const methodId = req.params.id;
+        console.log("aqui", methodId)
+        const deleteMethodQuery = 'DELETE FROM metododepagocliente WHERE id_metodo_pago_cliente = $1';
+        await db.query(deleteMethodQuery, [methodId]);
+        res.status(200).json({ message: 'Método de pago eliminado exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar método de pago:', error);
+        res.status(500).json({ error: 'Error interno del servidor al eliminar el método de pago' });
+    }
+});
+
+app.delete('/api/deleteToCart/:id', verifyToken, async (req, res) => {
+    try {
+        const bookId = req.params.id;
+        const deleteBookQuery = 'DELETE FROM carrito WHERE id_de_libro = $1 AND id_cliente = $2';
+        const userId = req.user.userId;
+        await db.query(deleteBookQuery, [bookId, userId]);
+        res.status(200).json({ message: 'Libro eliminado del carrito exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar libro del carrito:', error);
+        res.status(500).json({ error: 'Error interno del servidor al eliminar el libro del carrito' });
+    }
+});
 
 app.delete('/api/deleteBook/:id', verifyToken, async (req, res)=>{
     try{

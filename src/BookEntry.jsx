@@ -73,7 +73,7 @@ function BookEntry(props) {
                     <p>Sinopsis: {props.sinopsis}</p>
                 </div>
                 <div className="actions">
-                    <AddShoppingCartIcon className="Addcart" onClick={() => handleOpenPopup(props.id)} />
+                    <AddShoppingCartIcon className="Addcart"  style={{ fontSize: '5rem' }} onClick={() => handleOpenPopup(props.id)}/>
                 </div>
                 {openPopupId === props.id && (
                     <div className="popup-container">

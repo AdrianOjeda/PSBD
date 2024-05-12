@@ -1,0 +1,54 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: antiquewhite;
+}
+
+.carrito {
+    height: 100vh;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    width: 100%;
+    height: 100px;
+    padding: 30px;
+}
+
+.titulo {
+    margin: 0 auto;
+}
+
+.exit {
+    cursor: pointer;
+}
+
+
+.actions {
+    display: flex;
+    justify-content: flex-end; /* Alinea los elementos a la derecha */
+    padding: 10px;
+}
+
+.action {
+    display: flex;
+    align-items: center;
+    margin-left: 20px; /* Espacio entre cada acción */
+}
+
+
+.pagar-text {
+    margin-left: 10px;
+}
+
+.Payment {
+    cursor: pointer;
+}
