@@ -337,6 +337,170 @@ app.delete('/api/deleteToCart/:id', verifyToken, async (req, res) => {
     }
 });
 
+app.post('/api/confirmarCompra', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { montoTotal, cantidadLibros, idMetodoPago } = req.body;
+
+        // Obtener el id_metodo_pago real
+        const idMetodoPagoRealResult = await db.query(`
+            SELECT mp.id_metodo_pago 
+            FROM metododepagocliente mc 
+            INNER JOIN metododepago mp ON mc.id_metodo_pago = mp.id_metodo_pago 
+            WHERE id_metodo_pago_cliente = $1;
+        `, [idMetodoPago]);
+
+        // Verificar si se obtuvo algún resultado
+        if (idMetodoPagoRealResult.rows.length === 0) {
+            throw new Error("No se encontró el método de pago correspondiente.");
+        }
+
+        // Obtener el id_metodo_pago real como entero
+        const idMetodoPagoReal = parseInt(idMetodoPagoRealResult.rows[0].id_metodo_pago);
+
+        // Insertar la venta y obtener el ID de la venta
+        const insertVentaQuery = `
+            INSERT INTO venta (total, cantidad_de_items, fecha, id_cliente, id_metodo_pago)
+            VALUES ($1, $2, CURRENT_TIMESTAMP, $3, $4)
+            RETURNING id_venta;
+        `;
+        const ventaResult = await db.query(insertVentaQuery, [montoTotal, cantidadLibros, userId, idMetodoPagoReal]);
+        const ventaId = ventaResult.rows[0].id_venta;
+
+        // Actualizar el estado del detalle de venta para todos los libros en el carrito
+        const updateDetalleVentaQuery = `
+            UPDATE detalleventa
+            SET status = true,
+                id_venta = $1
+            WHERE id_cliente = $2 AND status = false;
+        `;
+        await db.query(updateDetalleVentaQuery, [ventaId, userId]);
+
+        res.status(200).json({ success: true, ventaId });
+    } catch (error) {
+        console.error('Error al confirmar la compra:', error);
+        res.status(500).json({ success: false, error: 'Error al confirmar la compra' });
+    }
+});
+
+
+app.get('/api/factura', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    console.log(userId)
+    try {
+        const facturaQuery = `
+        SELECT 
+        dv.id_detalle_venta, 
+        dv.id_de_libro, 
+        dv.precio_venta, 
+        dv.cantidad_de_libros, 
+        dv.fecha, 
+        dv.subtotal,
+        c.nombre as nombre_cliente,
+        v.id_venta
+    FROM 
+        detalleventa dv
+    INNER JOIN 
+        venta v ON dv.id_venta = v.id_venta
+    INNER JOIN 
+        cliente c ON v.id_cliente = c.id_cliente
+    WHERE 
+        v.id_cliente = $1
+    AND 
+        v.id_venta = (
+            SELECT 
+                id_venta
+            FROM 
+                venta
+            WHERE 
+                id_cliente = $1
+            ORDER BY 
+                id_venta DESC
+            LIMIT 1
+        );
+    
+        `;
+        const facturaResult = await db.query(facturaQuery, [userId]);
+        console.log("Esta es la factura", facturaResult)
+        // Enviar la respuesta con los datos de la factura
+        res.json({ facturaResult });
+    } catch (error) {
+        console.error('Error al obtener la factura:', error);
+        res.status(500).json({ error: 'Error al obtener la factura' });   
+    }
+});
+
+
+
+app.get('/api/obtenerMetodosPago', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+      // Consulta para obtener los métodos de pago del usuario desde la base de datos
+      const displayMethodQuery = `
+        SELECT 
+          mc.id_metodo_pago_cliente,
+          mp.metodo_pago,
+          mc.id_cliente,
+          mc.descripcion
+        FROM 
+          metododepagocliente mc
+        INNER JOIN
+          metododepago mp ON mc.id_metodo_pago = mp.id_metodo_pago
+        WHERE id_cliente = $1`;
+      const displayMethod = await db.query(displayMethodQuery, [userId]);
+      console.log(displayMethod)
+      res.status(200).json(displayMethod.rows); // Devolver los métodos de pago como respuesta
+    } catch (error) {
+      console.error("Error en la consulta:", error);
+      res.status(500).json({ error: "Failed to fetch payment methods " });
+    }
+  });
+  
+app.get('/api/obtenerTotales', verifyToken, async (req, res )=>{
+    const userId = req.user.userId;
+    try{
+        const displayConfir = `SELECT
+        SUM(libro.precio * carrito.cantidad) AS cantidadTotal,
+        CAST(SUM(carrito.cantidad) AS INTEGER) AS cantidadLibros
+    FROM
+        carrito
+    JOIN
+        libro ON carrito.id_de_libro = libro.id_de_libro
+    WHERE
+        carrito.id_cliente = $1;`
+        const QuerydisplayConfir = await db.query(displayConfir, [userId])
+        console.log(QuerydisplayConfir)
+        if (QuerydisplayConfir.rows.length > 0) {
+          const { cantidadtotal, cantidadlibros } = QuerydisplayConfir.rows[0];
+          res.json({ cantidadTotal: cantidadtotal, cantidadLibros: cantidadlibros });
+        } else {
+          res.status(404).json({ error: "No se encontraron datos de confirmación de compra para este usuario" });
+        }
+    } catch(error) {
+        console.error("Error en la consulta:", error);
+        res.status(500).json({ error: "Failed to fetch compra" });
+    }
+});
+
+app.post('/api/confirmarCompra', verifyToken, async(req, res) => {
+    const userId = req.user.userId;
+    const { montoTotal, cantidadLibros, idMetodoPago } = req.body;
+
+    try {
+        // Aquí ejecuta la consulta SQL INSERT para agregar una nueva fila en la tabla `venta`
+        const newSaleQuery = `
+            INSERT INTO venta (total, cantidad_de_items, fecha, id_cliente, id_metodo_pago)
+            VALUES ($1, $2, NOW(), $3, $4)
+            RETURNING id_venta;
+        `;
+        const newSaleResult = await db.query(newSaleQuery, [montoTotal, cantidadLibros, userId, idMetodoPago]);
+        const newSaleId = newSaleResult.rows[0].id_venta;
+        res.status(201).json({ id_venta: newSaleId });
+    } catch (error) {
+        console.error('Error al confirmar la compra:', error);
+        res.status(500).json({ error: 'Error al confirmar la compra' });
+    }
+});
 app.delete('/api/deleteBook/:id', verifyToken, async (req, res)=>{
     try{
         const userId = req.user.userId;

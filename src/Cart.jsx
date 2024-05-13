@@ -13,7 +13,7 @@ function Cart() {
             </header>
             <div className="actions">
                 <div className="action">
-                    <CreditCardIcon className="Payment" style={{ fontSize: '4rem' }} onClick={() => alert()} />
+                    <CreditCardIcon className="Payment" style={{ fontSize: '4rem' }} onClick={() => {window.location.href = "/pagar"}} />
                     <h2 className="pagar-text">Pagar</h2>
                 </div>
                 <div className="action">
