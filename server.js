@@ -6,7 +6,7 @@ import sha1 from 'sha1';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { verify } from "crypto";
-import { profile } from "console";
+import { log, profile } from "console";
 
 const app = express();
 const port = 3000;
@@ -291,19 +291,22 @@ app.post('/api/addMethod', verifyToken, async (req, res) => {
 
 app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) => {
     try {
-        const userId = req.token;
-        const { titulo, autor, isbn, descripcion } = req.body;
-        const image = req.file; // Access the uploaded file
-        const imageName = image.filename; // Store the filename
-        console.log(imageName);
-        // Insert book data into the database, including the image filename or URL
-        const insertQuery = `
-            INSERT INTO libro (titulo, autor, isbn, descripcion, idusuario, coverimage)
-            VALUES ($1, $2, $3, $4, $5, $6)`;
-        const result = await db.query(insertQuery, [titulo, autor, isbn, descripcion, userId, imageName]); // Assuming filename is used to store the image
-        console.log(result.rows);
-        
-        // Respond with success message
+        const image = req.file;
+        const fileImage = image.filename;
+        const {titulo, autor, isbn, descripcion, precio, stock, idioma, editorial} = req.body;
+        console.log(req.body)
+        console.log(image.filename)
+        const idAnterior = await db.query("SELECT id_de_libro from libro order by id_de_libro desc LIMIT 1;")
+        console.log(idAnterior);
+        const idAnteriorNuevo = idAnterior.rows[0].id_de_libro;
+        const idNuevo = idAnteriorNuevo + 1
+        console.log(idNuevo)
+        const insertQuery = `INSERT INTO libro(id_de_libro, titulo, isbn, precio, stock, autor, sinopsis, idioma, id_editorial, portada)
+                            VALUES
+                            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+        const insertQueryResult = await db.query(insertQuery,[idNuevo,titulo,isbn,precio,stock, autor, descripcion, idioma, editorial,fileImage])
+        console.log(insertQueryResult);
+
         res.status(200).json({ message: 'Book added successfully' });
     } catch (error) {
         console.error('Error adding book:', error);
@@ -501,48 +504,59 @@ app.post('/api/confirmarCompra', verifyToken, async(req, res) => {
         res.status(500).json({ error: 'Error al confirmar la compra' });
     }
 });
-app.delete('/api/deleteBook/:id', verifyToken, async (req, res)=>{
-    try{
+app.delete('/api/deleteBook/:id', verifyToken, async (req, res) => {    
+    try {
         const userId = req.user.userId;
         const bookId = req.params.id;
-        console.log("user id: "+ userId);
-        console.log("book id "+ bookId);
+        console.log("user id: " + userId);
+        console.log("book id " + bookId);
 
-        const deleteBookQuery = `DELETE FROM libro where id_libro =$1 AND idusuario = $2`;
-        await db.query(deleteBookQuery, [bookId, userId]);
-        
-         
+        const deleteDetalle = 'DELETE FROM detalleventa WHERE id_de_libro = $1';
+        const deleteDetaileResult = await db.query(deleteDetalle, [bookId]);
+        console.log(deleteDetaileResult);
 
-        res.status(200).json({message: "so far so good!"})
+        const deleteCart = 'DELETE FROM carrito WHERE id_de_libro = $1';
+        const deleteCartResult = await db.query(deleteCart, [bookId]);
+        console.log(deleteCartResult);
 
-    }catch(error){
+        const deleteBookQuery = 'DELETE FROM libro WHERE id_de_libro = $1';
+        await db.query(deleteBookQuery, [bookId]);
 
-        res.status(500).json({error: 'Couldnt delete book!'})
-    }
-    
+        res.status(200).json({ message: "Book deleted successfully!" });
 
-});
-
-
-app.post('/api/editBook', verifyToken, async (req, res)=>{
-    try{
-        const idUsuario =  req.user.userId;
-        const {titulo, autor, isbn, precio, idLibro} = req.body;
-        console.log("Id Usuario " + idUsuario);
-        console.log({titulo, autor, isbn, precio, idLibro});
-
-        const updateBookQuery = `update libro set titulo = $1, autor = $2, isbn = $3, precio = $4 where id_libro = $5 and idusuario = $6 `;
-
-        await db.query(updateBookQuery, [titulo, autor, isbn, precio, idLibro, idUsuario])
-
-        res.status(200).json({message: "So far so good"});
-
-    }catch (error){
-
-        res.status(500).json({error: "Book update failed"})
-
+    } catch (error) {
+        console.error("Error deleting book:", error);
+        res.status(500).json({ error: 'Could not delete book!' });
     }
 });
+
+
+app.post('/api/editBook', verifyToken, async (req, res) => {
+    try {
+        console.log(req.body);
+        const { titulo, autor, isbn, precio, idLibro, descripcion, stock, idioma, editorial } = req.body;
+        console.log(idLibro);
+        const queryEdit = `
+            UPDATE libro
+            SET titulo = $1,
+                isbn = $2,
+                precio = $3,
+                stock = $4,
+                autor = $5,
+                sinopsis = $6,
+                idioma = $7,
+                id_editorial = $8
+            WHERE id_de_libro = $9
+        `;
+        const queryEditResult = await db.query(queryEdit, [titulo, isbn, precio, stock, autor, descripcion, idioma, editorial, idLibro]);
+        console.log(queryEditResult); // Verifica la salida de la consulta en los logs
+
+        res.status(200).json({ message: "Book updated successfully" });
+    } catch (error) {
+       
+    }
+});
+
 
 app.get('/api/getUsers', async (req, res)=>{
     try{

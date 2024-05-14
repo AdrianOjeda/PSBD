@@ -1,0 +1,48 @@
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra los elementos horizontalmente */
+  justify-content: center; /* Centra los elementos verticalmente */
+  height: 100vh; /* Ocupa toda la altura del viewport */
+  background-color: #e6d4c5;
+}
+
+.boton {
+  background-color: #dbc1ac;
+  font-family: Arial, sans-serif;
+  border: 1px solid black;
+  border-radius: 10px;
+  min-height: 40px;
+  min-width: 150px;
+  padding: 15px;
+  font-size: large;
+  cursor: pointer;
+  margin: 10px; /* Espacio entre los botones */
+}
+
+.boton:hover {
+  background-color: #e6d4c5;
+}
+
+.header {
+  font-family: Arial, sans-serif;
+  width: 100%;
+  background-color: #000000;
+  color: rgb(255, 255, 255);
+  text-align: center;
+  position: absolute;
+  height: 100px;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%; /* Asegura que la cabecera ocupe toda la anchura */
+}
+
+.title {
+  margin: 0;
+  flex-grow: 1;
+  text-align: center;
+  text-decoration: wavy;
+}

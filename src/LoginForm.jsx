@@ -40,7 +40,7 @@ function LoginForm() {
 
                 // Redireccionar según el estado de isAdmin
                 if (isAdmin === true) {
-                    window.location.href = '/terminosYcondiciones'; // Página de administrador
+                    window.location.href = '/adminFeed'; // Página de administrador
                 } else {
                     window.location.href = '/feedreal'; // Página de usuario normal
                 }
