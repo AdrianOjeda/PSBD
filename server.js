@@ -314,6 +314,7 @@ app.post('/api/addBook', verifyToken, upload.single('image'), async (req, res) =
     }
 });
 
+
 app.delete('/api/deleteMethod/:id', verifyToken, async (req, res) => {
     try {
         const methodId = req.params.id;
@@ -383,6 +384,73 @@ app.post('/api/confirmarCompra', verifyToken, async (req, res) => {
     } catch (error) {
         console.error('Error al confirmar la compra:', error);
         res.status(500).json({ success: false, error: 'Error al confirmar la compra' });
+    }
+});
+
+app.post('/api/confirmRegisterOfBooks', verifyToken, async (req, res) => {
+    try {
+        // Insertar en la tabla facturadecompra y obtener el id_compra generado
+        const resultQuery = await db.query(`
+            INSERT INTO facturadecompra (fecha_factura, total, cantidad_items_compra)
+            SELECT
+                CURRENT_DATE,
+                SUM(subtotal) AS total,
+                SUM(cantidad_de_libros) AS cantidad_items_compra
+            FROM
+                detalledecompra
+            WHERE
+                id_compra IS NULL
+            RETURNING id_compra; -- Devuelve el id_compra generado
+        `);
+
+        const idCompra = resultQuery.rows[0].id_compra; // Obtener el id_compra generado
+
+        // Actualizar la tabla detalledecompra con el id_compra generado
+        await db.query(`
+            UPDATE detalledecompra
+            SET id_compra = $1 -- Usar el id_compra generado
+            WHERE id_compra IS NULL; -- Actualizar solo los registros con id_compra nulo
+        `, [idCompra]);
+
+        console.log("Detalle de compra actualizado con el id_compra:", idCompra);
+        res.status(200).json({ message: "Detalle de compra actualizado correctamente" });
+    } catch (error) {
+        console.error("Error al actualizar el detalle de compra:", error);
+        res.status(500).json({ error: "Error al actualizar el detalle de compra" });
+    }
+});
+
+
+app.get('/api/detalleCompra', verifyToken, async (req, res) => {   
+    try {
+        const detalleCompraQuery = `SELECT * FROM public.detalledecompra WHERE id_compra IS NULL;`;
+        const detalleCompraResult = await db.query(detalleCompraQuery);
+        console.log(detalleCompraResult); 
+
+        // Envía los datos recuperados como respuesta a la solicitud
+        res.json(detalleCompraResult.rows);
+    } catch (error) {
+        console.error("Error al obtener otra data:", error);
+        res.status(500).json({ error: "Error al obtener los datos de detalle de compra" }); 
+    }
+});
+
+app.get('/api/facturaCompra', verifyToken, async (req, res) => {
+    try {
+        const facturaQuery = `
+        SELECT id_compra, fecha_factura, total, cantidad_items_compra
+        FROM facturadecompra
+        ORDER BY id_compra DESC
+        LIMIT 1;
+        `;
+        const facturaQueryResult = await db.query(facturaQuery);
+        console.log("Factura aquí", facturaQueryResult);
+        
+        // Enviar los datos de la factura como respuesta al cliente
+        res.json(facturaQueryResult.rows[0]); // Suponiendo que facturaQueryResult.rows contiene los datos de la factura
+    } catch (error) {
+        console.error("Error al obtener los detalles de la compra:", error);
+        res.status(500).json({ error: "Error al obtener los detalles de la compra. Inténtelo de nuevo más tarde." });
     }
 });
 
@@ -508,12 +576,16 @@ app.delete('/api/deleteBook/:id', verifyToken, async (req, res) => {
     try {
         const userId = req.user.userId;
         const bookId = req.params.id;
-        console.log("user id: " + userId);
+        console.log("user id: " + userId); 
         console.log("book id " + bookId);
-
-        const deleteDetalle = 'DELETE FROM detalleventa WHERE id_de_libro = $1';
+ 
+        const deleteDetalle = 'DELETE FROM detalleventa WHERE id_de_libro = $1';  
         const deleteDetaileResult = await db.query(deleteDetalle, [bookId]);
         console.log(deleteDetaileResult);
+
+        const deleteDetalleCompra = 'DELETE FROM detalledecompra WHERE id_de_libro = $1';  
+        const deleteDetaileCompraResult = await db.query(deleteDetalleCompra, [bookId]);
+        console.log(deleteDetaileCompraResult);
 
         const deleteCart = 'DELETE FROM carrito WHERE id_de_libro = $1';
         const deleteCartResult = await db.query(deleteCart, [bookId]);

@@ -1,0 +1,48 @@
+.pag-factura-container {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 80%; /* Ajusta el ancho según tus necesidades */
+    margin: auto; /* Centra el contenedor horizontalmente */
+  }
+  
+  .pag-factura-title {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+  
+  .pag-factura-list {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .pag-factura-item {
+    margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+  }
+  
+  .pag-factura-item:last-child {
+    border-bottom: none;
+  }
+  
+  .button-container {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .button-container button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .button-container button:hover {
+    background-color: #0056b3;
+  }
+  

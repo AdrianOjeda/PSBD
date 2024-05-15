@@ -168,7 +168,7 @@ function Feed() {
                 </div>
             </form>
             <div className="footer">
-                <a href="/libros" className="login-link">
+                <a href="/MaestroDetalle" className="login-link">
                     Finalizar registros
                 </a>
             </div>
